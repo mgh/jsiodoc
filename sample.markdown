@@ -62,20 +62,29 @@ Chat Client and Server
 Let's build a chat client and server.  We'll use the Real Time JSON Protocol (RTJP) to abstract the network streams into events.  Rather than read and write directly to a socket, we'll send and receive frames with names and JSON payloads.  On the server side, we inherit from `RTJP` to create a class for client connections.  The `frameReceived` function is called when the client calls `client.sendFrame(frameName, args)`.
 
     #!javascript
+    require('js.io');
+    jsio.install();
     jsio('import net.interfaces');
-    jsio('import net.protocols.rtjp.RTJPProtocol as RTJP');
+    jsio('import net.protocols.rtjp as rtjp');
     
     // one ClientConn is created for each client that connects
-    var ClientConn = Class(RTJP, function() {
+    var ClientConn = Class(rtjp.RTJPProtocol, function(supr) {
+    
+    	this.init = function(server){
+    		this.server = server;
+    		supr(this,'init',[]);
+    	}
+    
         this.connectionMade = function() {
             this.server.addConn(this);
         }
-        
+    
         this.connectionLost = function() {
             this.server.removeConn(this);
         }
-        
+    
         this.frameReceived = function(id, frameName, args) {
+    		logger.log('recieved frame', id, frameName, args);
             switch(frameName) {
                 case 'JOIN':
                     this.server.broadcast('JOIN', {name: args.name, time: +new Date()});
@@ -92,45 +101,46 @@ Let's build a chat client and server.  We'll use the Real Time JSON Protocol (RT
         this.init = function() {
             this._conns = [];
         }
-        
-        this.buildProtocol = function() { return new ClientConn(); }
-        
+        this.buildProtocol = function() { return new ClientConn(this); }
+    
         this.addConn = function(conn) { this._conns.push(conn); }
         this.removeConn = function(conn) { this._conns.filter(function(c) { return c != conn; }); }
-        
+    
         this.broadcast = function(frameName, args) {
             for (var i = 0, conn; conn = this._conns[i]; i++) {
-                conn.sendFrame(frameName, args);
+                    conn.sendFrame(frameName, args);
             }
         }
     });
-    
-    new Server().listen('csp', 8000);
+
+    var server = new Server().listen('csp',{host:'localhost', port: 8000});
 
 A corresponding browser client would look very similar:
 
     #!javascript
     jsio('import net');
-    jsio('import net.protocols.rtjp.RTJPProtocol as RTJP');
+    jsio('import net.protocols.rtjp as rtjp');
     
-    var Connection = Class(RTJP, function() {
+    var Connection = Class(rtjp.RTJPProtocol, function() {
         this.frameReceived = function(id, frameName, args) {
             switch(frameName) {
-                case 'join':
+                case 'JOIN':
                     logger.log('A chatter joined!', args.name, 'at time', args.time)
                     break
-                case 'message':
+                case 'MESSAGE':
                     logger.log('Chatter says', args.name, ':', args.message)
                     break
-        }
-        
+             }
+        };
+    
         this.sendMessage = function(msg) {
-            this.sendFrame({name: this.username, message: msg});
-        }
+            this.sendFrame('MESSAGE',{name: 'bob', message: msg});
+        };
     });
     
     var client = new Connection();
-    net.connect(client, 'csp', 'http://myServer:8000');
+    net.connect(client, 'csp', {url: 'http://path/to/server:8001'});
+    
     
 Modules in Depth
 ----------------
