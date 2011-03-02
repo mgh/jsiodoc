@@ -62,8 +62,6 @@ Chat Client and Server
 Let's build a chat client and server.  We'll use the Real Time JSON Protocol (RTJP) to abstract the network streams into events.  Rather than read and write directly to a socket, we'll send and receive frames with names and JSON payloads.  On the server side, we inherit from `RTJP` to create a class for client connections.  The `frameReceived` function is called when the client calls `client.sendFrame(frameName, args)`.
 
     #!javascript
-    require('js.io');
-    jsio.install();
     jsio('import net.interfaces');
     jsio('import net.protocols.rtjp as rtjp');
     
@@ -132,7 +130,7 @@ A corresponding browser client would look very similar:
         };
     });
     var client = new Connection();
-    net.connect(client, 'csp', {url: 'http://path/to/server:8001'});
+    net.connect(client, 'csp', {url: 'http://localhost:8000'});
     
     
 Modules in Depth
