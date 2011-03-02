@@ -68,21 +68,17 @@ Let's build a chat client and server.  We'll use the Real Time JSON Protocol (RT
     jsio('import net.protocols.rtjp as rtjp');
     
     // one ClientConn is created for each client that connects
-    var ClientConn = Class(rtjp.RTJPProtocol, function(supr) {
-    
+    var ClientConn = Class(rtjp.RTJPProtocol, function(supr) {    
     	this.init = function(server){
     		this.server = server;
     		supr(this,'init',[]);
     	}
-    
         this.connectionMade = function() {
             this.server.addConn(this);
         }
-    
         this.connectionLost = function() {
             this.server.removeConn(this);
         }
-    
         this.frameReceived = function(id, frameName, args) {
     		logger.log('recieved frame', id, frameName, args);
             switch(frameName) {
@@ -120,7 +116,6 @@ A corresponding browser client would look very similar:
     #!javascript
     jsio('import net');
     jsio('import net.protocols.rtjp as rtjp');
-    
     var Connection = Class(rtjp.RTJPProtocol, function() {
         this.frameReceived = function(id, frameName, args) {
             switch(frameName) {
@@ -132,12 +127,10 @@ A corresponding browser client would look very similar:
                     break
              }
         };
-    
         this.sendMessage = function(msg) {
             this.sendFrame('MESSAGE',{name: 'bob', message: msg});
         };
     });
-    
     var client = new Connection();
     net.connect(client, 'csp', {url: 'http://path/to/server:8001'});
     
